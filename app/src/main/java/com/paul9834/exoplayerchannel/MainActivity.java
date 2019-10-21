@@ -80,7 +80,7 @@ public class MainActivity extends AppCompatActivity implements VideoRendererEven
 
         // 3. ¿Habilita controles en la vista?
 
-        simpleExoPlayerView.setUseController(true);
+        simpleExoPlayerView.setUseController(false);
         simpleExoPlayerView.requestFocus();
         simpleExoPlayerView.setPlayer(player);
 
@@ -105,7 +105,7 @@ public class MainActivity extends AppCompatActivity implements VideoRendererEven
 
         // 7. Ejecuta el reproductor.
 
-        player.prepare(videoSource);
+        player.prepare(loopingSource);
 
         player.addListener(new ExoPlayer.EventListener() {
             @Override

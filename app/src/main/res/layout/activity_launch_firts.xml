@@ -7,6 +7,16 @@
     tools:context=".LaunchFirts">
 
 
+    <EditText
+        android:id="@+id/editText"
+        android:layout_width="269dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="200dp"
+        android:ems="10"
+        android:hint="Ingrese el ID del Cliente"
+        android:inputType="number" />
+
     <Button
         android:id="@+id/Enviar"
         android:layout_width="253dp"
@@ -14,13 +24,4 @@
         android:layout_gravity="center"
         android:layout_marginTop="50dp"
         android:text="Enviar" />
-
-    <EditText
-        android:id="@+id/editText"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="200dp"
-        android:ems="10"
-        android:hint="Ingrese el ID del Cliente"
-        android:inputType="number" />
 </LinearLayout>
