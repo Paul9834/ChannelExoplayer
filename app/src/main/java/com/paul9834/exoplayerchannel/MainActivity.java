@@ -6,6 +6,7 @@ import android.preference.PreferenceManager;
 import androidx.appcompat.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Surface;
+import android.view.View;
 import android.widget.TextView;
 
 import com.google.android.exoplayer2.ExoPlaybackException;
@@ -59,6 +60,11 @@ public class MainActivity extends AppCompatActivity implements VideoRendererEven
         setContentView(R.layout.activity_main);
         resolutionTextView = new TextView(this);
         resolutionTextView = (TextView) findViewById(R.id.resolution_textView);
+
+
+        View decorView = getWindow().getDecorView();
+        int uiOptiones = View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
+        decorView.setSystemUiVisibility(uiOptiones);
 
         // 1. Se llama al servicio REST.
 
@@ -211,30 +217,56 @@ public class MainActivity extends AppCompatActivity implements VideoRendererEven
    @Override
     protected void onStop() {
         super.onStop();
+
+       View decorView = getWindow().getDecorView();
+       int uiOptiones = View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
+       decorView.setSystemUiVisibility(uiOptiones);
+
         Log.v(TAG, "onStop()...");
     }
 
     @Override
     protected void onStart() {
         super.onStart();
+
+        View decorView = getWindow().getDecorView();
+        int uiOptiones = View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
+        decorView.setSystemUiVisibility(uiOptiones);
+
         Log.v(TAG, "onStart()...");
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+
+        View decorView = getWindow().getDecorView();
+        int uiOptiones = View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
+        decorView.setSystemUiVisibility(uiOptiones);
+
         Log.v(TAG, "onResume()...");
     }
 
     @Override
     protected void onPause() {
         super.onPause();
+
+        View decorView = getWindow().getDecorView();
+        int uiOptiones = View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
+        decorView.setSystemUiVisibility(uiOptiones);
+
         Log.v(TAG, "onPause()...");
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+
+        View decorView = getWindow().getDecorView();
+        int uiOptiones = View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
+        decorView.setSystemUiVisibility(uiOptiones);
+
+
         Log.v(TAG, "onDestroy()...");
         player.release();
     }
