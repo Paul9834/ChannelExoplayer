@@ -21,6 +21,7 @@ import com.google.android.exoplayer2.source.ExtractorMediaSource;
 import com.google.android.exoplayer2.source.LoopingMediaSource;
 import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.source.TrackGroupArray;
+import com.google.android.exoplayer2.source.hls.HlsMediaSource;
 import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelection;
@@ -86,11 +87,13 @@ public class MainActivity extends AppCompatActivity implements VideoRendererEven
 
         // 3. ¿Habilita controles en la vista?
 
-        simpleExoPlayerView.setUseController(false);
+        simpleExoPlayerView.setUseController(true);
         simpleExoPlayerView.requestFocus();
         simpleExoPlayerView.setPlayer(player);
 
         DataSource.Factory dataSourceFactory = new DefaultDataSourceFactory(this, Util.getUserAgent(this, "exoplayer2example"), bandwidthMeter);
+
+
 
 
         // 4. Toma el id del canal en el SharedPreferences //
@@ -102,9 +105,20 @@ public class MainActivity extends AppCompatActivity implements VideoRendererEven
 
         // 5. Actualizado a nuevo formato de reproducción //
 
+
+
+        // Reproducción H265 via REST //
+
+
         MediaSource videoSource = new ExtractorMediaSource.Factory(dataSourceFactory).createMediaSource(Uri.parse(canalURL));
 
+
+
+
         // 6.  Loop cuando la señal de Streaming se cae //
+
+
+
 
         final LoopingMediaSource loopingSource = new LoopingMediaSource(videoSource);
 
