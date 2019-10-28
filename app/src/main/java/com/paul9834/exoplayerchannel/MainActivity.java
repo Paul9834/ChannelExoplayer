@@ -1,4 +1,8 @@
 package com.paul9834.exoplayerchannel;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
@@ -47,7 +51,10 @@ import retrofit2.converter.gson.GsonConverterFactory;
  *
  * @author  Kevin Paul Montealegre Melo
  * @version 1.0 - Solo 1 canal -
- */
+ *
+ **/
+
+
 public class MainActivity extends AppCompatActivity implements VideoRendererEventListener {
 
     private static final String TAG = "MainActivity";
@@ -94,31 +101,21 @@ public class MainActivity extends AppCompatActivity implements VideoRendererEven
         DataSource.Factory dataSourceFactory = new DefaultDataSourceFactory(this, Util.getUserAgent(this, "exoplayer2example"), bandwidthMeter);
 
 
-
-
         // 4. Toma el id del canal en el SharedPreferences //
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
         SharedPreferences.Editor editor = prefs.edit();
         String canalURL = prefs.getString("url", "no id");
+
         // Log.e("URL :", canalURL);
 
         // 5. Actualizado a nuevo formato de reproducción //
 
-
-
         // Reproducción H265 via REST //
-
 
         MediaSource videoSource = new ExtractorMediaSource.Factory(dataSourceFactory).createMediaSource(Uri.parse(canalURL));
 
-
-
-
         // 6.  Loop cuando la señal de Streaming se cae //
-
-
-
 
         final LoopingMediaSource loopingSource = new LoopingMediaSource(videoSource);
 
@@ -126,6 +123,8 @@ public class MainActivity extends AppCompatActivity implements VideoRendererEven
         // 7. Ejecuta el reproductor.
 
         player.prepare(loopingSource);
+
+
 
         player.addListener(new ExoPlayer.EventListener() {
             @Override
@@ -151,7 +150,10 @@ public class MainActivity extends AppCompatActivity implements VideoRendererEven
             @Override
             public void onPlayerError(ExoPlaybackException error) {
                 Log.e(TAG, "Listener-onPlayerError...");
-                player.prepare(loopingSource);
+
+                restartApp ();
+
+            player.prepare(loopingSource);
                 player.setPlayWhenReady(true);
             }
             @Override
@@ -166,6 +168,19 @@ public class MainActivity extends AppCompatActivity implements VideoRendererEven
         });
         player.setPlayWhenReady(true); //run file/link when ready to play.
         player.setVideoDebugListener(this);
+    }
+
+
+    public void restartApp () {
+
+        Intent mStartActivity = new Intent(this, MainActivity.class);
+        int mPendingIntentId = 123456;
+        PendingIntent mPendingIntent = PendingIntent.getActivity(this, mPendingIntentId,    mStartActivity, PendingIntent.FLAG_CANCEL_CURRENT);
+        AlarmManager mgr = (AlarmManager)this.getSystemService(Context.ALARM_SERVICE);
+        mgr.set(AlarmManager.RTC, System.currentTimeMillis() + 100, mPendingIntent);
+        System.exit(0);
+
+
     }
 
     public void llamadoSsrvicioRest() {
