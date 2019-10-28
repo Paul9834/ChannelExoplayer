@@ -150,11 +150,7 @@ public class MainActivity extends AppCompatActivity implements VideoRendererEven
             @Override
             public void onPlayerError(ExoPlaybackException error) {
                 Log.e(TAG, "Listener-onPlayerError...");
-
                 restartApp ();
-
-            player.prepare(loopingSource);
-                player.setPlayWhenReady(true);
             }
             @Override
             public void onPositionDiscontinuity(int reason) {
@@ -179,8 +175,6 @@ public class MainActivity extends AppCompatActivity implements VideoRendererEven
         AlarmManager mgr = (AlarmManager)this.getSystemService(Context.ALARM_SERVICE);
         mgr.set(AlarmManager.RTC, System.currentTimeMillis() + 100, mPendingIntent);
         System.exit(0);
-
-
     }
 
     public void llamadoSsrvicioRest() {
