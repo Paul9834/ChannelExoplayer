@@ -113,7 +113,7 @@ public class MainActivity extends AppCompatActivity implements VideoRendererEven
 
         // Reproducción H265 via REST //
 
-        MediaSource videoSource = new ExtractorMediaSource.Factory(dataSourceFactory).createMediaSource(Uri.parse("http://jell.yfish.us/media/jellyfish-3-mbps-hd-hevc.mkv"));
+        MediaSource videoSource = new ExtractorMediaSource.Factory(dataSourceFactory).createMediaSource(Uri.parse(canalURL));
 
         // 6.  Loop cuando la señal de Streaming se cae //
 
