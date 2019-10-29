@@ -113,7 +113,7 @@ public class MainActivity extends AppCompatActivity implements VideoRendererEven
 
         // Reproducción H265 via REST //
 
-        MediaSource videoSource = new ExtractorMediaSource.Factory(dataSourceFactory).createMediaSource(Uri.parse(canalURL));
+        MediaSource videoSource = new ExtractorMediaSource.Factory(dataSourceFactory).createMediaSource(Uri.parse("http://jell.yfish.us/media/jellyfish-3-mbps-hd-hevc.mkv"));
 
         // 6.  Loop cuando la señal de Streaming se cae //
 
@@ -169,12 +169,12 @@ public class MainActivity extends AppCompatActivity implements VideoRendererEven
 
     public void restartApp () {
 
-        Intent mStartActivity = new Intent(this, MainActivity.class);
-        int mPendingIntentId = 123456;
-        PendingIntent mPendingIntent = PendingIntent.getActivity(this, mPendingIntentId,    mStartActivity, PendingIntent.FLAG_CANCEL_CURRENT);
-        AlarmManager mgr = (AlarmManager)this.getSystemService(Context.ALARM_SERVICE);
-        mgr.set(AlarmManager.RTC, System.currentTimeMillis() + 100, mPendingIntent);
-        System.exit(0);
+        Intent i = new Intent(MainActivity.this, MainActivity.class);
+        finish();
+        overridePendingTransition(0, 0);
+        startActivity(i);
+        overridePendingTransition(0, 0);
+
     }
 
     public void llamadoSsrvicioRest() {
