@@ -18,6 +18,7 @@ import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.ExoPlayerFactory;
 import com.google.android.exoplayer2.Format;
 import com.google.android.exoplayer2.PlaybackParameters;
+import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.decoder.DecoderCounters;
@@ -140,6 +141,20 @@ public class MainActivity extends AppCompatActivity implements VideoRendererEven
             @Override
             public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
                 Log.v(TAG, "Listener-onPlayerStateChanged..." + playbackState + "|||isDrawingCacheEnabled():" + simpleExoPlayerView.isDrawingCacheEnabled());
+
+                switch(playbackState) {
+                    case Player.STATE_BUFFERING:
+                        break;
+                    case Player.STATE_ENDED:
+                        //Here you do what you want
+                        break;
+                    case Player.STATE_IDLE:
+                        break;
+                    case Player.STATE_READY:
+                        break;
+                    default:
+                        break;
+                }
             }
             @Override
             public void onRepeatModeChanged(int repeatMode) {
@@ -150,6 +165,7 @@ public class MainActivity extends AppCompatActivity implements VideoRendererEven
             @Override
             public void onPlayerError(ExoPlaybackException error) {
                 Log.e(TAG, "Listener-onPlayerError...");
+                player.seekTo(0);
                 restartApp ();
             }
             @Override
@@ -160,6 +176,7 @@ public class MainActivity extends AppCompatActivity implements VideoRendererEven
             }
             @Override
             public void onSeekProcessed() {
+
             }
         });
         player.setPlayWhenReady(true); //run file/link when ready to play.
@@ -262,7 +279,7 @@ public class MainActivity extends AppCompatActivity implements VideoRendererEven
     @Override
     protected void onResume() {
         super.onResume();
-
+        player.seekTo(0);
         View decorView = getWindow().getDecorView();
         int uiOptiones = View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
         decorView.setSystemUiVisibility(uiOptiones);
@@ -274,10 +291,10 @@ public class MainActivity extends AppCompatActivity implements VideoRendererEven
     protected void onPause() {
         super.onPause();
 
+        player.seekTo(0);
         View decorView = getWindow().getDecorView();
         int uiOptiones = View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
         decorView.setSystemUiVisibility(uiOptiones);
-
         Log.v(TAG, "onPause()...");
     }
 
@@ -288,9 +305,8 @@ public class MainActivity extends AppCompatActivity implements VideoRendererEven
         View decorView = getWindow().getDecorView();
         int uiOptiones = View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
         decorView.setSystemUiVisibility(uiOptiones);
-
-
         Log.v(TAG, "onDestroy()...");
         player.release();
+        player.seekTo(0);
     }
 }
