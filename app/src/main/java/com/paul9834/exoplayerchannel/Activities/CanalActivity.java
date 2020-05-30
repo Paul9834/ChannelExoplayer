@@ -1,4 +1,4 @@
-package com.paul9834.exoplayerchannel;
+package com.paul9834.exoplayerchannel.Activities;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -10,7 +10,9 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
-public class LaunchFirts extends AppCompatActivity {
+import com.paul9834.exoplayerchannel.R;
+
+public class CanalActivity extends AppCompatActivity {
 
     EditText id;
     Button actividad;
@@ -35,12 +37,12 @@ public class LaunchFirts extends AppCompatActivity {
                     id.setError("Ingrese un ID de canal");
                 } else {
 
-                    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(LaunchFirts.this);
+                    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(CanalActivity.this);
                     SharedPreferences.Editor editor = prefs.edit();
                     editor.putString("id", texto);
                     editor.apply();
 
-                    Intent intent = new Intent(LaunchFirts.this, MainActivity.class);
+                    Intent intent = new Intent(CanalActivity.this, ReproductorActivity.class);
                     startActivity(intent);
                     finish();
                 }
@@ -54,7 +56,7 @@ public class LaunchFirts extends AppCompatActivity {
                 .getBoolean("isFirstRun", true);
 
         if (!isFirstRun) {
-            Intent intent = new Intent(LaunchFirts.this, MainActivity.class);
+            Intent intent = new Intent(CanalActivity.this, ReproductorActivity.class);
             startActivity(intent);
             finish();
         }

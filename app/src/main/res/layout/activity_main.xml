@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:background="@color/Black"
     android:keepScreenOn="true"
-    tools:context="com.paul9834.exoplayerchannel.MainActivity">
+    tools:context="com.paul9834.exoplayerchannel.Activities.ReproductorActivity">
 
 
     <TextView

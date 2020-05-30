@@ -1,7 +1,4 @@
-package com.paul9834.exoplayerchannel;
-import android.app.AlarmManager;
-import android.app.PendingIntent;
-import android.content.Context;
+package com.paul9834.exoplayerchannel.Activities;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
@@ -26,7 +23,6 @@ import com.google.android.exoplayer2.source.ExtractorMediaSource;
 import com.google.android.exoplayer2.source.LoopingMediaSource;
 import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.source.TrackGroupArray;
-import com.google.android.exoplayer2.source.hls.HlsMediaSource;
 import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelection;
@@ -39,6 +35,10 @@ import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
 import com.google.android.exoplayer2.util.Util;
 import com.google.android.exoplayer2.video.VideoRendererEventListener;
+import com.paul9834.exoplayerchannel.Controllers.Canales;
+import com.paul9834.exoplayerchannel.Entities.Canal;
+import com.paul9834.exoplayerchannel.R;
+import com.paul9834.exoplayerchannel.RetrofitClient.RetrofitClient;
 
 import java.util.List;
 
@@ -56,7 +56,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
  **/
 
 
-public class MainActivity extends AppCompatActivity implements VideoRendererEventListener {
+public class ReproductorActivity extends AppCompatActivity implements VideoRendererEventListener {
 
     private static final String TAG = "MainActivity";
     private PlayerView simpleExoPlayerView;
@@ -85,12 +85,22 @@ public class MainActivity extends AppCompatActivity implements VideoRendererEven
 
         // 2. Crea el reproductor.
 
+
+
         player = ExoPlayerFactory.newSimpleInstance(this, trackSelector);
+
+
         simpleExoPlayerView = new SimpleExoPlayerView(this);
         simpleExoPlayerView = (SimpleExoPlayerView) findViewById(R.id.player_view);
 
+
+
+
         int h = simpleExoPlayerView.getResources().getConfiguration().screenHeightDp;
         int w = simpleExoPlayerView.getResources().getConfiguration().screenWidthDp;
+
+
+
         Log.v(TAG, "height : " + h + " weight: " + w);
 
         // 3. ¿Habilita controles en la vista?
@@ -104,7 +114,7 @@ public class MainActivity extends AppCompatActivity implements VideoRendererEven
 
         // 4. Toma el id del canal en el SharedPreferences //
 
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(ReproductorActivity.this);
         SharedPreferences.Editor editor = prefs.edit();
         String canalURL = prefs.getString("url", "no id");
 
@@ -122,6 +132,8 @@ public class MainActivity extends AppCompatActivity implements VideoRendererEven
 
 
         // 7. Ejecuta el reproductor.
+
+
 
         player.prepare(loopingSource);
 
@@ -186,7 +198,7 @@ public class MainActivity extends AppCompatActivity implements VideoRendererEven
 
     public void restartApp () {
 
-        Intent i = new Intent(MainActivity.this, MainActivity.class);
+        Intent i = new Intent(ReproductorActivity.this, ReproductorActivity.class);
         finish();
         overridePendingTransition(0, 0);
         startActivity(i);
@@ -195,37 +207,39 @@ public class MainActivity extends AppCompatActivity implements VideoRendererEven
     }
 
     public void llamadoSsrvicioRest() {
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("http://headendredir.terraformed.services/")
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
-        CanalesIDInterface canalesIDInterface = retrofit.create(CanalesIDInterface.class);
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
+
+
+
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(ReproductorActivity.this);
         SharedPreferences.Editor editor = prefs.edit();
         String id = prefs.getString("id", "no id");
-        Call<List<PostCanalesID>> call = canalesIDInterface.getPosts(id);
-        call.enqueue(new Callback<List<PostCanalesID>>() {
+
+
+        Call<List<Canal>> call = RetrofitClient.getInstance().getCanal().getPosts(id);
+
+
+        call.enqueue(new Callback<List<Canal>>() {
             @Override
-            public void onResponse(Call<List<PostCanalesID>> call, retrofit2.Response<List<PostCanalesID>> response) {
+            public void onResponse(Call<List<Canal>> call, retrofit2.Response<List<Canal>> response) {
                 if (!response.isSuccessful()) {
                     return;
                 }
-                List<PostCanalesID> posts = response.body();
+                List<Canal> posts = response.body();
                 String url = "";
-                for (PostCanalesID post : posts) {
+                for (Canal post : posts) {
                     String content = "";
                     content += "link : " + post.getalt_uri() + "\n";
                     url = post.getalt_uri();
                 }
                 //  Log.e("url del ID ", url);
-                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
+                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(ReproductorActivity.this);
                 SharedPreferences.Editor editor = prefs.edit();
                 editor.putString("url", url);
                 editor.apply();
 
             }
             @Override
-            public void onFailure(Call<List<PostCanalesID>> call, Throwable t) {
+            public void onFailure(Call<List<Canal>> call, Throwable t) {
             }
         });
     }

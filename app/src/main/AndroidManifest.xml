@@ -8,8 +8,8 @@
         android:label="TV APP - 1 Canal"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".MainActivity"></activity>
-        <activity android:name=".LaunchFirts">
+        <activity android:name=".Activities.ReproductorActivity"></activity>
+        <activity android:name=".Activities.CanalActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

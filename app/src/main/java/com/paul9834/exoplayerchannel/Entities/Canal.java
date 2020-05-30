@@ -1,6 +1,6 @@
-package com.paul9834.exoplayerchannel;
+package com.paul9834.exoplayerchannel.Entities;
 
-public class PostCanalesID {
+public class Canal {
 
     private String id;
     private String uri;
