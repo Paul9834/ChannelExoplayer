@@ -1,51 +1,38 @@
 package com.paul9834.exoplayerchannel.Activities;
+
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import androidx.appcompat.app.AppCompatActivity;
 import android.util.Log;
-import android.view.Surface;
 import android.view.View;
-import android.widget.TextView;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.exoplayer2.ExoPlaybackException;
-import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.ExoPlayerFactory;
-import com.google.android.exoplayer2.Format;
-import com.google.android.exoplayer2.PlaybackParameters;
 import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.SimpleExoPlayer;
-import com.google.android.exoplayer2.Timeline;
-import com.google.android.exoplayer2.decoder.DecoderCounters;
-import com.google.android.exoplayer2.source.ExtractorMediaSource;
 import com.google.android.exoplayer2.source.LoopingMediaSource;
 import com.google.android.exoplayer2.source.MediaSource;
-import com.google.android.exoplayer2.source.TrackGroupArray;
-import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection;
+import com.google.android.exoplayer2.source.ProgressiveMediaSource;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
-import com.google.android.exoplayer2.trackselection.TrackSelection;
-import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
-import com.google.android.exoplayer2.trackselection.TrackSelector;
 import com.google.android.exoplayer2.ui.PlayerView;
-import com.google.android.exoplayer2.ui.SimpleExoPlayerView;
 import com.google.android.exoplayer2.upstream.DataSource;
-import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
+import com.google.android.exoplayer2.upstream.DataSpec;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
+import com.google.android.exoplayer2.upstream.HttpDataSource;
 import com.google.android.exoplayer2.util.Util;
-import com.google.android.exoplayer2.video.VideoRendererEventListener;
-import com.paul9834.exoplayerchannel.Controllers.Canales;
 import com.paul9834.exoplayerchannel.Entities.Canal;
 import com.paul9834.exoplayerchannel.R;
 import com.paul9834.exoplayerchannel.RetrofitClient.RetrofitClient;
 
+import java.io.IOException;
 import java.util.List;
 
 import retrofit2.Call;
 import retrofit2.Callback;
-import retrofit2.Retrofit;
-import retrofit2.converter.gson.GsonConverterFactory;
 
 /**
  * Reproducción de ExoPlayer a través de microservicio Rest.
@@ -56,159 +43,124 @@ import retrofit2.converter.gson.GsonConverterFactory;
  **/
 
 
-public class ReproductorActivity extends AppCompatActivity implements VideoRendererEventListener {
+public class ReproductorActivity extends AppCompatActivity implements Player.EventListener {
 
-    private static final String TAG = "MainActivity";
-    private PlayerView simpleExoPlayerView;
+
+    private PlayerView playerView;
     private SimpleExoPlayer player;
-    private TextView resolutionTextView;
+    private boolean playWhenReady = true;
+    private int currentWindow = 0;
+    private long playbackPosition = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        resolutionTextView = new TextView(this);
-        resolutionTextView = (TextView) findViewById(R.id.resolution_textView);
 
 
-        View decorView = getWindow().getDecorView();
-        int uiOptiones = View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
-        decorView.setSystemUiVisibility(uiOptiones);
+        playerView = findViewById(R.id.player_view);
 
-        // 1. Se llama al servicio REST.
+        CallService();
+    }
 
-        llamadoSsrvicioRest();
-
-        DefaultBandwidthMeter bandwidthMeter = new DefaultBandwidthMeter();
-        TrackSelection.Factory videoTrackSelectionFactory = new AdaptiveTrackSelection.Factory(bandwidthMeter);
-        TrackSelector trackSelector = new DefaultTrackSelector(videoTrackSelectionFactory);
-
-        // 2. Crea el reproductor.
-
-
-
-        player = ExoPlayerFactory.newSimpleInstance(this, trackSelector);
-
-
-        simpleExoPlayerView = new SimpleExoPlayerView(this);
-        simpleExoPlayerView = (SimpleExoPlayerView) findViewById(R.id.player_view);
-
-
-
-
-        int h = simpleExoPlayerView.getResources().getConfiguration().screenHeightDp;
-        int w = simpleExoPlayerView.getResources().getConfiguration().screenWidthDp;
-
-
-
-        Log.v(TAG, "height : " + h + " weight: " + w);
-
-        // 3. ¿Habilita controles en la vista?
-
-        simpleExoPlayerView.setUseController(true);
-        simpleExoPlayerView.requestFocus();
-        simpleExoPlayerView.setPlayer(player);
-
-        DataSource.Factory dataSourceFactory = new DefaultDataSourceFactory(this, Util.getUserAgent(this, "exoplayer2example"), bandwidthMeter);
-
-
-        // 4. Toma el id del canal en el SharedPreferences //
+    private void initializePlayer() {
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(ReproductorActivity.this);
-        SharedPreferences.Editor editor = prefs.edit();
         String canalURL = prefs.getString("url", "no id");
 
-        // Log.e("URL :", canalURL);
 
-        // 5. Actualizado a nuevo formato de reproducción //
+        if (player == null) {
+            DefaultTrackSelector trackSelector = new DefaultTrackSelector();
+            trackSelector.setParameters(
+                    trackSelector.buildUponParameters().setMaxVideoSizeSd());
+            player = ExoPlayerFactory.newSimpleInstance(this, trackSelector);
+        }
 
-        // Reproducción H265 via REST //
-
-        MediaSource videoSource = new ExtractorMediaSource.Factory(dataSourceFactory).createMediaSource(Uri.parse(canalURL));
-
-        // 6.  Loop cuando la señal de Streaming se cae //
-
-        final LoopingMediaSource loopingSource = new LoopingMediaSource(videoSource);
-
-
-        // 7. Ejecuta el reproductor.
+        playerView.setPlayer(player);
+        MediaSource mediaSource = buildMediaSource(Uri.parse(canalURL));
 
 
 
-        player.prepare(loopingSource);
+
+        final LoopingMediaSource loopingSource = new LoopingMediaSource(mediaSource);
 
 
 
-        player.addListener(new ExoPlayer.EventListener() {
-            @Override
-            public void onTimelineChanged(Timeline timeline, Object manifest, int reason) {
-            }
-            @Override
-            public void onTracksChanged(TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {
-                Log.v(TAG, "Listener-onTracksChanged... ");
-            }
-            @Override
-            public void onLoadingChanged(boolean isLoading) {
-            }
-            @Override
-            public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
-                Log.v(TAG, "Listener-onPlayerStateChanged..." + playbackState + "|||isDrawingCacheEnabled():" + simpleExoPlayerView.isDrawingCacheEnabled());
+        player.setPlayWhenReady(playWhenReady);
+        player.seekTo(currentWindow, playbackPosition);
+        player.prepare(loopingSource, false, false);
+        player.addListener(this);
 
-                switch(playbackState) {
-                    case Player.STATE_BUFFERING:
-                        break;
-                    case Player.STATE_ENDED:
-                        //Here you do what you want
-                        break;
-                    case Player.STATE_IDLE:
-                        break;
-                    case Player.STATE_READY:
-                        break;
-                    default:
-                        break;
+
+
+
+    }
+
+
+    @Override
+    public void onPlayerError(ExoPlaybackException error) {
+
+        if (error.type == ExoPlaybackException.TYPE_SOURCE) {
+            IOException cause = error.getSourceException();
+            if (cause instanceof HttpDataSource.HttpDataSourceException) {
+
+                Log.e("Paul","Error");
+
+                // An HTTP error occurred.
+                HttpDataSource.HttpDataSourceException httpError = (HttpDataSource.HttpDataSourceException) cause;
+                // This is the request for which the error occurred.
+                DataSpec requestDataSpec = httpError.dataSpec;
+                // It's possible to find out more about the error both by casting and by
+                // querying the cause.
+                if (httpError instanceof HttpDataSource.InvalidResponseCodeException) {
+                    // Cast to InvalidResponseCodeException and retrieve the response code,
+                    // message and headers.
+                } else {
+                    // Try calling httpError.getCause() to retrieve the underlying cause,
+                    // although note that it may be null.
                 }
             }
-            @Override
-            public void onRepeatModeChanged(int repeatMode) {
-            }
-            @Override
-            public void onShuffleModeEnabledChanged(boolean shuffleModeEnabled) {
-            }
-            @Override
-            public void onPlayerError(ExoPlaybackException error) {
-                Log.e(TAG, "Listener-onPlayerError...");
-                player.seekTo(0);
-                restartApp ();
-            }
-            @Override
-            public void onPositionDiscontinuity(int reason) {
-            }
-            @Override
-            public void onPlaybackParametersChanged(PlaybackParameters playbackParameters) {
-            }
-            @Override
-            public void onSeekProcessed() {
-
-            }
-        });
-        player.setPlayWhenReady(true); //run file/link when ready to play.
-        player.setVideoDebugListener(this);
-    }
-
-
-    public void restartApp () {
-
-        Intent i = new Intent(ReproductorActivity.this, ReproductorActivity.class);
-        finish();
-        overridePendingTransition(0, 0);
-        startActivity(i);
-        overridePendingTransition(0, 0);
+        }
 
     }
 
-    public void llamadoSsrvicioRest() {
+    private MediaSource buildMediaSource(Uri uri) {
 
 
+        DataSource.Factory dataSourceFactory =
+                new DefaultDataSourceFactory(this, "exoplayer-codelab");
+
+
+        return new ProgressiveMediaSource.Factory(dataSourceFactory).createMediaSource(uri);
+
+
+
+    }
+
+
+    private void hideSystemUi() {
+        playerView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE
+                | View.SYSTEM_UI_FLAG_FULLSCREEN
+                | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
+    }
+
+    private void releasePlayer() {
+        if (player != null) {
+            playWhenReady = player.getPlayWhenReady();
+            playbackPosition = player.getCurrentPosition();
+            currentWindow = player.getCurrentWindowIndex();
+            player.release();
+            player = null;
+        }
+    }
+
+
+
+
+    public void CallService() {
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(ReproductorActivity.this);
         SharedPreferences.Editor editor = prefs.edit();
@@ -243,84 +195,51 @@ public class ReproductorActivity extends AppCompatActivity implements VideoRende
             }
         });
     }
-    @Override
-    public void onVideoEnabled(DecoderCounters counters) {
-    }
-    @Override
-    public void onVideoDecoderInitialized(String decoderName, long initializedTimestampMs, long initializationDurationMs) {
-    }
-    @Override
-    public void onVideoInputFormatChanged(Format format) {
-    }
-    @Override
-    public void onDroppedFrames(int count, long elapsedMs) {
-    }
-    @Override
-    public void onVideoSizeChanged(int width, int height, int unappliedRotationDegrees, float pixelWidthHeightRatio) {
-        Log.v(TAG, "onVideoSizeChanged [" + " width: " + width + " height: " + height + "]");
-        resolutionTextView.setText("RES:(WxH):" + width + "X" + height + "\n           " + height + "p");//shows video info
-    }
-    @Override
-    public void onRenderedFirstFrame(Surface surface) {
+
+    public void restartApp () {
+
+        Intent i = new Intent(ReproductorActivity.this, ReproductorActivity.class);
+        finish();
+        overridePendingTransition(0, 0);
+        startActivity(i);
+        overridePendingTransition(0, 0);
 
     }
-    @Override
-    public void onVideoDisabled(DecoderCounters counters) {
 
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (Util.SDK_INT < 24) {
+            releasePlayer();
+        }
     }
-   @Override
-    protected void onStop() {
+
+    @Override
+    public void onStop() {
         super.onStop();
-
-       View decorView = getWindow().getDecorView();
-       int uiOptiones = View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
-       decorView.setSystemUiVisibility(uiOptiones);
-
-        Log.v(TAG, "onStop()...");
+        if (Util.SDK_INT >= 24) {
+            releasePlayer();
+        }
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-
-        View decorView = getWindow().getDecorView();
-        int uiOptiones = View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
-        decorView.setSystemUiVisibility(uiOptiones);
-
-        Log.v(TAG, "onStart()...");
+        if (Util.SDK_INT >= 24) {
+            initializePlayer();
+        }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        player.seekTo(0);
-        View decorView = getWindow().getDecorView();
-        int uiOptiones = View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
-        decorView.setSystemUiVisibility(uiOptiones);
+        hideSystemUi();
+        if ((Util.SDK_INT < 24 || player == null)) {
+            initializePlayer();
+        }
 
-        Log.v(TAG, "onResume()...");
     }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
 
-        player.seekTo(0);
-        View decorView = getWindow().getDecorView();
-        int uiOptiones = View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
-        decorView.setSystemUiVisibility(uiOptiones);
-        Log.v(TAG, "onPause()...");
-    }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-
-        View decorView = getWindow().getDecorView();
-        int uiOptiones = View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
-        decorView.setSystemUiVisibility(uiOptiones);
-        Log.v(TAG, "onDestroy()...");
-        player.release();
-        player.seekTo(0);
-    }
 }
