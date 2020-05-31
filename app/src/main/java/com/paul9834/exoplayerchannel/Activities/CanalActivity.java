@@ -25,29 +25,25 @@ public class CanalActivity extends AppCompatActivity {
         id = findViewById(R.id.editText);
         actividad = findViewById(R.id.Enviar);
 
-
         checkFirstOpen();
 
-        actividad.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String texto = id.getText().toString().trim();
 
-                if (TextUtils.isEmpty(texto)) {
-                    id.setError("Ingrese un ID de canal");
-                } else {
+        actividad.setOnClickListener(v -> {
+            String texto = id.getText().toString().trim();
 
-                    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(CanalActivity.this);
-                    SharedPreferences.Editor editor = prefs.edit();
-                    editor.putString("id", texto);
-                    editor.apply();
+            if (TextUtils.isEmpty(texto)) {
+                id.setError("Ingrese un ID de canal");
+            } else {
+                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(CanalActivity.this);
+                SharedPreferences.Editor editor = prefs.edit();
+                editor.putString("id", texto);
+                editor.apply();
 
-                    Intent intent = new Intent(CanalActivity.this, ReproductorActivity.class);
-                    startActivity(intent);
-                    finish();
-                }
-
+                Intent intent = new Intent(CanalActivity.this, ReproductorActivity.class);
+                startActivity(intent);
+                finish();
             }
+
         });
     }
 
