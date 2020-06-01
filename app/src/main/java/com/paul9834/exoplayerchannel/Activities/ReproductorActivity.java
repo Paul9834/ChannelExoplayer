@@ -81,14 +81,9 @@ public class ReproductorActivity extends AppCompatActivity implements Player.Eve
 
 
 
-
-        final LoopingMediaSource loopingSource = new LoopingMediaSource(mediaSource);
-
-
-
         player.setPlayWhenReady(playWhenReady);
         player.seekTo(currentWindow, playbackPosition);
-        player.prepare(loopingSource, false, false);
+        player.prepare(mediaSource, false, false);
         player.addListener(this);
 
 
@@ -96,6 +91,21 @@ public class ReproductorActivity extends AppCompatActivity implements Player.Eve
 
     }
 
+
+    @Override
+    public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
+        if (playWhenReady && playbackState == Player.STATE_READY) {
+            Log.e("Status", "Reproduciendo");
+            // media actually playing
+        } else if (playWhenReady) {
+            // might be idle (plays after prepare()),
+            // buffering (plays when data available)
+            // or ended (plays when seek away from end)
+        } else {
+            Log.e("Status", "Pausado");
+            // player paused in any state
+        }
+    }
 
     @Override
     public void onPlayerError(ExoPlaybackException error) {
@@ -125,16 +135,9 @@ public class ReproductorActivity extends AppCompatActivity implements Player.Eve
     }
 
     private MediaSource buildMediaSource(Uri uri) {
-
-
         DataSource.Factory dataSourceFactory =
                 new DefaultDataSourceFactory(this, "exoplayer-codelab");
-
-
         return new ProgressiveMediaSource.Factory(dataSourceFactory).createMediaSource(uri);
-
-
-
     }
 
 
