@@ -30,6 +30,7 @@ import com.paul9834.exoplayerchannel.Entities.LogCat;
 import com.paul9834.exoplayerchannel.Entities.PlayerStatus;
 import com.paul9834.exoplayerchannel.R;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 
 /**
@@ -123,8 +124,7 @@ public class ReproductorActivity extends AppCompatActivity implements Player.Eve
             if (cause instanceof HttpDataSource.HttpDataSourceException) {
 
                 restartApp();
-
-                Log.e("Paul","Error");
+                Log.e("Error HTTP","Error de fuente, verificar conexión");
 
                 // An HTTP error occurred.
                 HttpDataSource.HttpDataSourceException httpError = (HttpDataSource.HttpDataSourceException) cause;
@@ -140,6 +140,12 @@ public class ReproductorActivity extends AppCompatActivity implements Player.Eve
                     // although note that it may be null.
                 }
             }
+            if (cause instanceof FileNotFoundException) {
+                restartApp();
+                Log.e("Error de Fuente","Error de fuente, verificar servidor");
+
+            }
+
         }
 
     }
