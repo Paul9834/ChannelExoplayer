@@ -7,7 +7,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class RetrofitClient {
 
-    private static final String BASE_URL = "https://headend.badala.software";
+    private static final String BASE_URL = "https://headendev.badala.software";
     private static RetrofitClient mInstance;
     private final Retrofit retrofit;
 

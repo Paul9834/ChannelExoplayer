@@ -4,9 +4,12 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.CountDownTimer;
+import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.View;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -14,7 +17,6 @@ import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayerFactory;
 import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.SimpleExoPlayer;
-import com.google.android.exoplayer2.source.LoopingMediaSource;
 import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.source.ProgressiveMediaSource;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
@@ -24,15 +26,11 @@ import com.google.android.exoplayer2.upstream.DataSpec;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
 import com.google.android.exoplayer2.upstream.HttpDataSource;
 import com.google.android.exoplayer2.util.Util;
-import com.paul9834.exoplayerchannel.Entities.Canal;
+import com.paul9834.exoplayerchannel.Entities.LogCat;
+import com.paul9834.exoplayerchannel.Entities.PlayerStatus;
 import com.paul9834.exoplayerchannel.R;
-import com.paul9834.exoplayerchannel.RetrofitClient.RetrofitClient;
 
 import java.io.IOException;
-import java.util.List;
-
-import retrofit2.Call;
-import retrofit2.Callback;
 
 /**
  * Reproducción de ExoPlayer a través de microservicio Rest.
@@ -51,23 +49,35 @@ public class ReproductorActivity extends AppCompatActivity implements Player.Eve
     private boolean playWhenReady = true;
     private int currentWindow = 0;
     private long playbackPosition = 0;
+    private PlayerStatus playerStatus;
+
+    private SharedPreferences prefs;
+    private Handler handler;
+    private Runnable myRunnable;
+    private LogCat logCat;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        logCat = new LogCat();
 
 
         playerView = findViewById(R.id.player_view);
+        playerStatus = new PlayerStatus(this);
 
-        CallService();
+        playerStatus.callServiceURLChannel();
+
+        loopLog();
+
+
+
     }
 
     private void initializePlayer() {
 
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(ReproductorActivity.this);
+        prefs = PreferenceManager.getDefaultSharedPreferences(ReproductorActivity.this);
         String canalURL = prefs.getString("url", "no id");
-
 
         if (player == null) {
             DefaultTrackSelector trackSelector = new DefaultTrackSelector();
@@ -80,14 +90,10 @@ public class ReproductorActivity extends AppCompatActivity implements Player.Eve
         MediaSource mediaSource = buildMediaSource(Uri.parse(canalURL));
 
 
-
         player.setPlayWhenReady(playWhenReady);
         player.seekTo(currentWindow, playbackPosition);
         player.prepare(mediaSource, false, false);
         player.addListener(this);
-
-
-
 
     }
 
@@ -95,6 +101,7 @@ public class ReproductorActivity extends AppCompatActivity implements Player.Eve
     @Override
     public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
         if (playWhenReady && playbackState == Player.STATE_READY) {
+            playerStatus.playBack();
             Log.e("Status", "Reproduciendo");
             // media actually playing
         } else if (playWhenReady) {
@@ -102,6 +109,7 @@ public class ReproductorActivity extends AppCompatActivity implements Player.Eve
             // buffering (plays when data available)
             // or ended (plays when seek away from end)
         } else {
+            playerStatus.pausePlayback();
             Log.e("Status", "Pausado");
             // player paused in any state
         }
@@ -113,6 +121,8 @@ public class ReproductorActivity extends AppCompatActivity implements Player.Eve
         if (error.type == ExoPlaybackException.TYPE_SOURCE) {
             IOException cause = error.getSourceException();
             if (cause instanceof HttpDataSource.HttpDataSourceException) {
+
+                restartApp();
 
                 Log.e("Paul","Error");
 
@@ -133,6 +143,21 @@ public class ReproductorActivity extends AppCompatActivity implements Player.Eve
         }
 
     }
+
+    private void loopLog() {
+        handler = new Handler();
+        int delay = 10000;
+        handler.postDelayed(myRunnable = new Runnable() {
+            public void run() {
+                String log = logCat.writeLog();
+                logCat.clearLog();
+                playerStatus.saveLog(log);
+                handler.postDelayed(this, delay);
+            }
+        }, delay);
+    }
+
+
 
     private MediaSource buildMediaSource(Uri uri) {
         DataSource.Factory dataSourceFactory =
@@ -160,44 +185,6 @@ public class ReproductorActivity extends AppCompatActivity implements Player.Eve
         }
     }
 
-
-
-
-    public void CallService() {
-
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(ReproductorActivity.this);
-        SharedPreferences.Editor editor = prefs.edit();
-        String id = prefs.getString("id", "no id");
-
-
-        Call<List<Canal>> call = RetrofitClient.getInstance().getCanal().getPosts(id);
-
-
-        call.enqueue(new Callback<List<Canal>>() {
-            @Override
-            public void onResponse(Call<List<Canal>> call, retrofit2.Response<List<Canal>> response) {
-                if (!response.isSuccessful()) {
-                    return;
-                }
-                List<Canal> posts = response.body();
-                String url = "";
-                for (Canal post : posts) {
-                    String content = "";
-                    content += "link : " + post.getalt_uri() + "\n";
-                    url = post.getalt_uri();
-                }
-                //  Log.e("url del ID ", url);
-                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(ReproductorActivity.this);
-                SharedPreferences.Editor editor = prefs.edit();
-                editor.putString("url", url);
-                editor.apply();
-
-            }
-            @Override
-            public void onFailure(Call<List<Canal>> call, Throwable t) {
-            }
-        });
-    }
 
     public void restartApp () {
 
